@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Алгоритм Дейкстры</title>
+    <link rel="stylesheet" href="styles/global.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="title">Алгоритм Дейкстры — Редактор графов</div>
+      <div class="toolbar" id="toolbar"></div>
+    </header>
+
+    <main class="content">
+      <section class="matrix-panel" id="matrix-panel">
+        <div class="matrix-controls">
+          <button id="btn-add-vertex" class="primary">Добавить вершину</button>
+          <input id="vertex-index-input" type="number" min="0" placeholder="№ вершины" />
+          <button id="btn-delete-vertex" class="warn">Удалить вершину</button>
+        </div>
+        <div id="matrix-editor"></div>
+      </section>
+      <section class="graph-panel" id="graph-panel">
+        <canvas id="graph-canvas" width="900" height="600"></canvas>
+        <div id="context-menu" class="context-menu" hidden></div>
+      </section>
+    </main>
+
+    <footer class="status-bar">
+      <div id="status-text">Добро пожаловать!</div>
+    </footer>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+  </html>
