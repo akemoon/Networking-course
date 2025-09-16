@@ -1,5 +1,5 @@
 import { GraphModel } from './graph/GraphModel.js';
-import { dijkstra } from './graph/Dijkstra.js';
+import { Dijkstra } from './graph/Dijkstra.js';
 import { CanvasView } from './ui/CanvasView.js';
 import { ContextMenu } from './ui/ContextMenu.js';
 import { Matrix } from './ui/Matrix.js';
@@ -74,6 +74,12 @@ if (btnClearMatrix) {
 }
 
 //TODO: clear way
+const btnClearWay = document.getElementById('btn-clear-way');
+if (btnClearWay) {
+  btnClearWay.addEventListener('click', () => {
+    canvas.setHighlight([]);
+  });
+}
 
 // Update all when matrix changed
 const matrixEditor = document.getElementById('matrix-editor');
@@ -123,7 +129,7 @@ function handleRun() {
   const start = canvas.start;
   const end = canvas.end;
   if (start == null || end == null) { setStatus('Выберите начальную и конечную вершины.'); return; }
-  const res = dijkstra(model, start, end);
+  const res = Dijkstra(model, start, end);
   if (!res.path.length) {
     canvas.setHighlight([]);
     setStatus('Пути не существует.');
