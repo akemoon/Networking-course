@@ -30,10 +30,6 @@ export class CanvasView {
   setEnd(id) { this.end = id; this.draw(); }
 
   setHighlight(path) { this.highlightPath = path || []; this.draw(); }
-  
-  checkEdgeWeight(w) {
-
-  }
 
   _bindEvents() {
     this.canvas.addEventListener('contextmenu', (e) => {
