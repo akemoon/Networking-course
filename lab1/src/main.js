@@ -73,11 +73,13 @@ if (btnClearMatrix) {
   });
 }
 
-//TODO: clear way
 const btnClearWay = document.getElementById('btn-clear-way');
 if (btnClearWay) {
   btnClearWay.addEventListener('click', () => {
+    setStatus(null); 
     canvas.setHighlight([]);
+    canvas.setStart(null);
+    canvas.setEnd(null);
   });
 }
 
@@ -89,14 +91,20 @@ if (matrixEditor) {
   })
 }
 
-// Update matrix and status when edge added
-canvas.onChanged = (reason) => {
-  if (reason === 'edge-added') {
+function checkEdgeWeightStatuses(status) {
+  if (status === 'correct' || status === 'null') {
     setStatus(null);
-    matrix.draw();
-  } else if (reason === 'negative-weight') {
-    setStatus('Вес не может быть отрицательным числом.')
+  } else if (status === 'neg-weigth' || status === 'not-a-num' || status === 'empty') {
+    setStatus('Вес должен быть неотрицательным числом.');
   }
+}
+
+// Update matrix when edge added
+canvas.onChanged = (status) => {
+  if (status === 'correct') {
+    matrix.draw();
+  }
+  checkEdgeWeightStatuses(status);
 };
 
 // ---------- Context menu ----------
@@ -111,13 +119,24 @@ canvas.onContextMenu = ({ x, y, hitV, hitE }) => {
   else if (hitE) {
     items.push({ label: `Удалить дугу ${hitE.from}→${hitE.to}`, onClick: () => { model.removeEdge(hitE.from, hitE.to); drawAll(); } });
     items.push({ label: `Изменить вес ${hitE.from}→${hitE.to}`, onClick: () => {
-      const w = prompt('Новый вес (неотриц.)', String(hitE.weight)); if (w !== null && !isNaN(Number(w)) && Number(w) >= 0) { model.setEdgeWeight(hitE.from, hitE.to, Number(w)); drawAll(); }
+      const raw = prompt('Новый вес (неотрицательный)');
+      const status = model.checkEdgeWeight(raw);
+      if (status === 'correct') { 
+        model.setEdgeWeight(hitE.from, hitE.to, Number(raw));
+        drawAll();
+      }
+      checkEdgeWeightStatuses(status);
     }});
   }
   else {
     items.push({ label: 'Добавить вершину', onClick: () => { model.addVertex(); drawAll(); } });
-    items.push({ label: 'Добавить дугу', onClick: () => { canvas.setMode('add-edge'); setStatus('Добавление дуги: кликните на стартовую и конечную вершины.'); } });
-    items.push({ label: 'Очистить путь', onClick: () => { setStatus(null); canvas.setHighlight([]) } });
+    items.push({ label: 'Добавить дугу', onClick: () => { canvas.setMode('add-edge'); setStatus('Добавление дуги: кликните на начальную и конечную вершины.'); } });
+    items.push({ label: 'Очистить путь', onClick: () => {
+      setStatus(null); 
+      canvas.setHighlight([]);
+      canvas.setStart(null);
+      canvas.setEnd(null);
+    }});
   }
   
   menu.setItems(items);

@@ -9,10 +9,10 @@
 
 3. Run container:
     ```
-    docker run -d --rm -p 8080:8080 app
+    docker run -d --rm --name app -p 8080:8080 app
     ```
 
 4. Tests:
     ```
-    docker exec -it app ./tests/Dijkstra.test.mjs 
+    docker exec -it app node ./tests/Dijkstra.test.mjs
     ```

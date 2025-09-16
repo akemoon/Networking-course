@@ -30,6 +30,10 @@ export class CanvasView {
   setEnd(id) { this.end = id; this.draw(); }
 
   setHighlight(path) { this.highlightPath = path || []; this.draw(); }
+  
+  checkEdgeWeight(w) {
+
+  }
 
   _bindEvents() {
     this.canvas.addEventListener('contextmenu', (e) => {
@@ -50,19 +54,13 @@ export class CanvasView {
             this.pendingEdge.from = hitV.id;
             this._changed('edge-pending');
           } else if (this.pendingEdge.from !== null && hitV) {
-            let changedReason = 'cancel-edge-adding';
-            const w = prompt('Вес дуги (неотриц.)', '1');
-            if (w !== null && !isNaN(Number(w))) {
-              if (Number(w) >= 0) {
-                this.model.addEdge(this.pendingEdge.from, hitV.id, Number(w));
-                changedReason = 'edge-added';
-              } else {
-                changedReason = 'negative-weight'
-              }
+            const raw = prompt('Вес дуги (неотрицательный)');
+            const status = this.model.checkEdgeWeight(raw);
+            if (status === 'correct') {
+              this.model.addEdge(this.pendingEdge.from, hitV.id, Number(raw));
             }
-            
             this.setMode('idle')
-            this._changed(changedReason);
+            this._changed(status);
           }
         } else if (hitV) {
           this.drag = { active: true, id: hitV.id, dx: p.x - hitV.x, dy: p.y - hitV.y };
