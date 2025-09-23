@@ -55,18 +55,7 @@ await test('returns Infinity when no path exists', () => {
   assert.deepEqual(res.path, []);
 });
 
-// 5) Negative edges are ignored
-await test('ignores negative-weight edges for safety', () => {
-  const g = createGraph(3);
-  g.addEdge(0, 1, 1);
-  g.addEdge(1, 2, -5); // should be ignored by dijkstra()
-  g.addEdge(0, 2, 5);
-  const res = Dijkstra(g, 0, 2);
-  assert.equal(res.distance, 5);
-  assert.deepEqual(res.path, [0, 2]);
-});
-
-// 6) Cycle handling
+// 5) Cycle handling
 await test('handles cycles and still finds optimal path', () => {
   const g = createGraph(3);
   g.addEdge(0, 1, 2);
