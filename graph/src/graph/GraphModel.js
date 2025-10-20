@@ -101,7 +101,6 @@ export class GraphModel {
   }
 
   getAdjacencyList() {
-    const n = this.size;
     const adj = new Map(this.vertices.map(v => [v.id, []]));
     for (const e of this.edges) {
       adj.get(e.from).push({ to: e.to, weight: e.weight });
@@ -109,4 +108,3 @@ export class GraphModel {
     return adj;
   }
 }
-

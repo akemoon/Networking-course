@@ -4,6 +4,9 @@ import { CanvasView } from './ui/CanvasView.js';
 import { ContextMenu } from './ui/ContextMenu.js';
 import { Matrix } from './ui/Matrix.js';
 import { buildToolbar } from './ui/Controls.js';
+import { Floyd } from './graph/Floyd.js';
+
+let mode = 'Floyd';
 
 const maxVertNum = 10;
 
@@ -145,15 +148,37 @@ canvas.onContextMenu = ({ x, y, hitV, hitE }) => {
 menu.onHide = () => {};
 
 function handleRun() {
-  const start = canvas.start;
-  const end = canvas.end;
-  if (start == null || end == null) { setStatus('Выберите начальную и конечную вершины.'); return; }
-  const res = Dijkstra(model, start, end);
-  if (!res.path.length) {
-    canvas.setHighlight([]);
-    setStatus('Пути не существует.');
-  } else {
-    canvas.setHighlight(res.path);
-    setStatus(`Длина пути: ${res.distance}. Путь: ${res.path.join(' → ')}.`);
+  if (mode === 'Dijkstra') {
+    const start = canvas.start;
+    const end = canvas.end;
+    if (start == null || end == null) { setStatus('Выберите начальную и конечную вершины.'); return; }
+    const res = Dijkstra(model, start, end);
+    if (!res.path.length) {
+      canvas.setHighlight([]);
+      setStatus('Пути не существует.');
+    } else {
+      canvas.setHighlight(res.path);
+      setStatus(`Длина пути: ${res.distance}. Путь: ${res.path.join(' → ')}.`);
+    }
+  }
+  else if (mode === 'Floyd') {
+    const n = graph.size();
+    const al = graph.getAdjacencyList();
+    
+    // Form weight matrix
+    const w = Array.from(
+        { length: n }, () => Array(n).fill(Infinity)
+    );
+    for (let i = 0; i < n; i++) {
+        w[i][i] = 0;
+    }
+    for (const [from, neighbours] of al) {
+        for (const { to, weight } of neighbours) {
+            w[from][to] = weight;
+        }
+    }
+
+    const paths = Floyd(w);
+    setStatus(paths);
   }
 }

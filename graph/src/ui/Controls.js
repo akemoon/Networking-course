@@ -1,7 +1,7 @@
 export function buildToolbar(root, api) {
   root.innerHTML = '';
   const btnRun = button('Найти путь', () => api.runDijkstra());
-  root.append( btnRun);
+  root.append(btnRun);
 }
 
 function button(label, onClick, cls) {
