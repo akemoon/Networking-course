@@ -1,1 +1,0 @@
-- [ ] Change neg numbers filter

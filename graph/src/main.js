@@ -25,11 +25,35 @@ const panelMatrix = document.getElementById('matrix-panel');
 buildToolbar(document.getElementById('toolbar'), {
   runDijkstra: handleRun,
 });
+const timingsToggle = document.getElementById('toggle-timings');
 
 // Keep status bar height when clearing text by using a non-breaking space
 function setStatus(text) {
   const t = (text == null || String(text).trim() === '') ? '\u00A0' : String(text);
   status.textContent = t;
+}
+
+function now() {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now();
+  }
+  return Date.now();
+}
+
+function formatDuration(ms) {
+  if (ms >= 1) {
+    return `${ms.toFixed(2)} мс`;
+  }
+  const micro = ms * 1e3;
+  if (micro >= 1) {
+    return `${micro.toFixed(2)} мкс`;
+  }
+  const nano = micro * 1e3;
+  return `${nano.toFixed(2)} нс`;
+}
+
+function shouldShowTimings() {
+  return Boolean(timingsToggle && timingsToggle.checked);
 }
 
 function drawAll() {
@@ -97,8 +121,8 @@ if (matrixEditor) {
 function checkEdgeWeightStatuses(status) {
   if (status === 'correct' || status === 'null') {
     setStatus(null);
-  } else if (status === 'neg-weigth' || status === 'not-a-num' || status === 'empty') {
-    setStatus('Вес должен быть неотрицательным числом.');
+  } else if (status === 'not-a-num' || status === 'empty') {
+    setStatus('Вес должен быть числом.');
   }
 }
 
@@ -114,7 +138,7 @@ canvas.onChanged = (status) => {
 
 canvas.onContextMenu = ({ x, y, hitV, hitE }) => {
   const items = [];
-  if (hitV) {
+  if (hitV && mode === 'Dijkstra') {
     items.push({ label: 'Начальная вершина', onClick: () => { canvas.setStart(hitV.id); } });
     items.push({ label: 'Конечная вершина', onClick: () => { canvas.setEnd(hitV.id); } })
     items.push({ label: `Удалить вершину ${hitV.id}`, onClick: () => { model.removeVertex(hitV.id); drawAll(); } });
@@ -122,7 +146,7 @@ canvas.onContextMenu = ({ x, y, hitV, hitE }) => {
   else if (hitE) {
     items.push({ label: `Удалить дугу ${hitE.from}→${hitE.to}`, onClick: () => { model.removeEdge(hitE.from, hitE.to); drawAll(); } });
     items.push({ label: `Изменить вес ${hitE.from}→${hitE.to}`, onClick: () => {
-      const raw = prompt('Новый вес (неотрицательный)');
+      const raw = prompt('Новый вес');
       const status = model.checkEdgeWeight(raw);
       if (status === 'correct') { 
         model.setEdgeWeight(hitE.from, hitE.to, Number(raw));
@@ -152,52 +176,96 @@ function handleRun() {
     const start = canvas.start;
     const end = canvas.end;
     if (start == null || end == null) { setStatus('Выберите начальную и конечную вершины.'); return; }
+    const t0 = now();
     const res = Dijkstra(model, start, end);
+    const elapsed = now() - t0;
+    if (res === null) {
+      canvas.setHighlight([]);
+      let message = 'Граф содержит отрицательные веса.';
+      if (shouldShowTimings()) { message += `\nВремя Дейкстры: ${formatDuration(elapsed)}`; }
+      setStatus(message);
+      return;
+    }
+    const distance = res.distance ?? res.dist;
     if (!res.path.length) {
       canvas.setHighlight([]);
-      setStatus('Пути не существует.');
+      let message = 'Пути не существует.';
+      if (shouldShowTimings()) { message += `\nВремя Дейкстры: ${formatDuration(elapsed)}`; }
+      setStatus(message);
     } else {
       canvas.setHighlight(res.path);
-      setStatus(`Длина пути: ${res.distance}. Путь: ${res.path.join(' → ')}.`);
+      let message = `Длина пути: ${distance}. Путь: ${res.path.join(' → ')}.`;
+      if (shouldShowTimings()) { message += `\nВремя Дейкстры: ${formatDuration(elapsed)}`; }
+      setStatus(message);
     }
   }
   else if (mode === 'Floyd') {
     const w = model.getWeightMatrix();
-    const resFloyd = Floyd(w);
-
-    if (resFloyd === null) {
-      setStatus('Граф содержит отрицательный цикл.');
-      return;
+    
+    function formRes(res) {
+      let out = '[\n';
+      for (const [from, other] of res) {
+        for (const {to, path, dist} of other) {
+          out += `  [${from}, ${to}, [${path}], ${dist}]`;
+        }
+        out += '\n';
+      }
+      out += ']';
+      return out;
     }
 
+    const startFloyd = now();
+    const resFloyd = Floyd(w);
+    const elapsedFloyd = now() - startFloyd;
+    let outFloyd = 'Флойд:\n';
+    if (resFloyd === null) {
+      outFloyd += 'Граф содержит отрицательный цикл.';
+    } else {
+      outFloyd += formRes(resFloyd);
+    }
+
+    let negWeight = false;
     const resDijkstra = new Map();
+    let totalTimeDijkstra = 0;
+    let countRunsDijkstra = 0;
     for (let i = 0; i < model.size; i++) {
       let js = [];
       for (let j = 0; j < model.size; j++) {
         if (i !== j) {
+          const startDijkstra = now();
           const res = Dijkstra(model, i, j);
+          const elapsedDijkstra = now() - startDijkstra;
+          totalTimeDijkstra += elapsedDijkstra;
+          countRunsDijkstra++;
           if (res === null) {
-            setStatus('Граф содержит отрицательные веса.')
-            return;
+            negWeight = true;
+            break;
           }
           js.push({to: j, path: res.path, dist: res.dist});
         }
       }
+      if (negWeight) {
+        break;
+      }
       resDijkstra.set(i, js);
     }
 
-    function formRes(res) {
-      let output = '[\n';
-      for (const [from, other] of res) {
-        for (const {to, path, dist} of other) {
-          output += `  [${from}, ${to}, [${path}], ${dist}]`;
-        }
-        output += '\n';
-      }
-      output += ']';
-      return output;
+    let outDijkstra = 'Дейкстра:\n';
+    if (negWeight) {
+      outDijkstra += 'Граф содержит отрицательные веса.';
+    } else {
+      outDijkstra += formRes(resDijkstra);
     }
 
-    setStatus(formRes(resFloyd) + '\n\n' + formRes(resDijkstra));
+    let out = '';
+    if (shouldShowTimings()) {
+      const timingLines = [
+        `Время Флойда: ${formatDuration(elapsedFloyd)}`,
+        `\nСуммарное время Дейкстры (${countRunsDijkstra} запусков): ${formatDuration(totalTimeDijkstra)}\n\n`
+      ];
+      out += timingLines;
+    }
+    out += (outFloyd + '\n\n' + outDijkstra);
+    setStatus(out);
   }
 }

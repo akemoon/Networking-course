@@ -106,15 +106,21 @@ export class Matrix {
     const from = order[i];
     const to = order[j];
     const s = String(rawVal).trim();
-    if (s === '' || !isFinite(Number(s)) || Number(s) < 0) {
+    if (s === '') {
       this.model.removeEdge(from, to);
       this._suspend++;
       try { this.inputs[i][j].value = ''; } finally { this._suspend--; }
     } else {
-      const w = Number(s);
-      this.model.addEdge(from, to, w);
-      this._suspend++;
-      try { this.inputs[i][j].value = String(w); } finally { this._suspend--; }
+      const w = Number(s.replace(',', '.'));
+      if (!Number.isFinite(w)) {
+        this.model.removeEdge(from, to);
+        this._suspend++;
+        try { this.inputs[i][j].value = ''; } finally { this._suspend--; }
+      } else {
+        this.model.addEdge(from, to, w);
+        this._suspend++;
+        try { this.inputs[i][j].value = String(w); } finally { this._suspend--; }
+      }
     }
   }
 }

@@ -58,8 +58,6 @@ export class GraphModel {
     const n = Number(s.replace(',', '.'));
     if (!Number.isFinite(n)) {
       return 'not-a-num';
-    } else if (n < 0) {
-      return 'neg-weigth';
     } else {
       return 'correct';
     }
@@ -111,7 +109,7 @@ export class GraphModel {
         const w = M[i][j];
         if (w !== null && w !== "" && isFinite(Number(w))) {
           const weight = Number(w);
-          if (weight >= 0) this.addEdge(i, j, weight);
+          this.addEdge(i, j, weight);
         }
       }
     }

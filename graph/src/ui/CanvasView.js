@@ -50,7 +50,7 @@ export class CanvasView {
             this.pendingEdge.from = hitV.id;
             this._changed('edge-pending');
           } else if (this.pendingEdge.from !== null && hitV) {
-            const raw = prompt('Вес дуги (неотрицательный)');
+            const raw = prompt('Вес дуги');
             const status = this.model.checkEdgeWeight(raw);
             if (status === 'correct') {
               this.model.addEdge(this.pendingEdge.from, hitV.id, Number(raw));
