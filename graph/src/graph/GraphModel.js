@@ -78,6 +78,23 @@ export class GraphModel {
     return { matrix: M, order: ids }; // order: vertex id order
   }
 
+  getWeightMatrix() {
+    const n = this.size;
+
+    // Form weight matrix
+    const w = Array.from(
+        { length: n }, () => Array(n).fill(Infinity)
+    );
+    for (let i = 0; i < n; i++) {
+        w[i][i] = 0;
+    }
+    for (const e of this.edges) {
+      w[e.from][e.to] = Number(e.weight);
+    }
+
+    return w;
+  }
+
   fromMatrix(M) {
     const n = Math.min(M.length, this.maxVertices);
     // Normalize vertices count to n

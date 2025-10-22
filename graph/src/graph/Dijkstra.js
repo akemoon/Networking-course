@@ -4,7 +4,20 @@ export function Dijkstra(graph, startId, endId) {
     return { distance: Infinity, path: [], prev: new Map(), visited: new Set() };
   }
 
+  function hasNegativeEdge(adj) {
+    for (const edges of adj.values()) {
+      for (const { weight } of edges) {
+        if (weight < 0) return true;
+      }
+    }
+    return false;
+  }
+
   const adj = graph.getAdjacencyList();
+  if (hasNegativeEdge(adj)) {
+    return null;
+  }
+  
   const dist = new Map(vertices.map(id => [id, Infinity]));
   const prev = new Map(vertices.map(id => [id, null]));
   const visited = new Set();
@@ -35,5 +48,5 @@ export function Dijkstra(graph, startId, endId) {
     while (curr !== null) { path.push(curr); curr = prev.get(curr); }
     path.reverse();
   }
-  return { distance: dist.get(endId), path, prev, visited };
+  return { dist: dist.get(endId), path };
 }

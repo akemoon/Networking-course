@@ -162,23 +162,42 @@ function handleRun() {
     }
   }
   else if (mode === 'Floyd') {
-    const n = graph.size();
-    const al = graph.getAdjacencyList();
-    
-    // Form weight matrix
-    const w = Array.from(
-        { length: n }, () => Array(n).fill(Infinity)
-    );
-    for (let i = 0; i < n; i++) {
-        w[i][i] = 0;
-    }
-    for (const [from, neighbours] of al) {
-        for (const { to, weight } of neighbours) {
-            w[from][to] = weight;
-        }
+    const w = model.getWeightMatrix();
+    const resFloyd = Floyd(w);
+
+    if (resFloyd === null) {
+      setStatus('Граф содержит отрицательный цикл.');
+      return;
     }
 
-    const paths = Floyd(w);
-    setStatus(paths);
+    const resDijkstra = new Map();
+    for (let i = 0; i < model.size; i++) {
+      let js = [];
+      for (let j = 0; j < model.size; j++) {
+        if (i !== j) {
+          const res = Dijkstra(model, i, j);
+          if (res === null) {
+            setStatus('Граф содержит отрицательные веса.')
+            return;
+          }
+          js.push({to: j, path: res.path, dist: res.dist});
+        }
+      }
+      resDijkstra.set(i, js);
+    }
+
+    function formRes(res) {
+      let output = '[\n';
+      for (const [from, other] of res) {
+        for (const {to, path, dist} of other) {
+          output += `  [${from}, ${to}, [${path}], ${dist}]`;
+        }
+        output += '\n';
+      }
+      output += ']';
+      return output;
+    }
+
+    setStatus(formRes(resFloyd) + '\n\n' + formRes(resDijkstra));
   }
 }

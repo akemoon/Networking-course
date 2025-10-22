@@ -41,7 +41,7 @@ export function Floyd(weightMatrix) {
             if (i === j) {
                 continue;
             } else if (w[i][j] === Infinity) {
-                js.push({to: j, path: null, weight: Infinity});
+                js.push({to: j, path: null, dist: Infinity});
             } else {
                 let p = [j];
                 let k = j;
@@ -50,7 +50,7 @@ export function Floyd(weightMatrix) {
                     p.push(k);
                 }
                 p.reverse();
-                js.push({to: j, path: p, weight: w[i][j]});
+                js.push({to: j, path: p, dist: w[i][j]});
             }
         }
         paths.set(i, js);
